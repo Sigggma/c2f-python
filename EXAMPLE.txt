@@ -1,0 +1,1 @@
+python ...\Cell2Fire_MessagesOut\Cell2Fire_MessagesV.py --input-instance-folder=...\400CellsHomC1\ --Prometheus-tuned --plot-hour --grid-hour --Fire-Period-Length=1.0 --nsims=1 --ignitions --output-folder=C:/Users/Lenovo/Desktop/June2018_Cell2Fire/28May --output-messages
