@@ -223,6 +223,7 @@ class Main:
         print("Fire Period Length > Weather Period: setting Fire Period Length = Weather Period")
         FirePeriodLen = MinutesPerWP
     print("Fire Period Length for ROS computations [min]: ", FirePeriodLen)
+
     # Burning period length
     if args.BurningLen > 0:
         print("Cells maximum burning periods is set to", args.BurningLen)
@@ -230,7 +231,7 @@ class Main:
         initHarvested = np.loadtxt(fname=HCells, delimiter=",", dtype=int)
         print("Initial harvested cells:", initHarvested)
     else:
-	initHarvested = []
+        initHarvested = []
 
     print("-----------------------------------------------------------------------------------")
     ##########################################################################################################
@@ -248,6 +249,7 @@ class Main:
         DF["time"] = np.zeros(DF.shape[0]) + 20
     if verbose == True:
         print("DF:", DF)
+
 
     # Getting FType for each cell from data 
     FTypeCells2 = np.array(DF['fueltype'], dtype=object)
@@ -593,55 +595,56 @@ class Main:
             print("Harvest Cells:", HarvestCells_Set)
 
         ##########################################################################################################
-        #                                   Years' loop (Periods = 4 by default) 
+        # Years' loop (Periods = 4 by default) 
         ##########################################################################################################    
         while Year <= TotalYears:
-                if verbose == True:
-                    print("\nSimulating Year", Year, "\n", "Out of totalYears:", TotalYears)
+            if verbose == True:
+                print("\nSimulating Year", Year, "\n", "Out of totalYears:", TotalYears)
+
             #########################################################################################################
-        #				Step 0: Harvested Heuristic
-        ########################################################################################################
+            # Step 0: Harvested Heuristic
+            ########################################################################################################
+            if heuristic != 0:
+                print("---------------------- Step 0: Harvest Heuristic ----------------------")
+                HarvestedCells, TotalDemand[Year - 1], TotalUtility[Year - 1] = Heuristics(heuristic,
+                                                                                        AvailCells_Set,
+                                                                                        BurntCells_Set,
+                                                                                        HarvestedCells,
+                                                                                        Year,
+                                                                                        InFolder,
+                                                                                        AdjCells,
+                                                                                        NCells,
+                                                                                        Utility,
+                                                                                        Volume,
+                                                                                        DemandArray,
+                                                                                        Cells_Obj,
+                                                                                        Weather_Obj,
+                                                                                        G)
+
+                HarvestCells_Set = HarvestCells_Set.union(HarvestedCells)
+                print('HarvestedCells_Set', HarvestCells_Set)
+                AvailCells_Set = AvailCells_Set.difference(HarvestCells_Set)
                 if heuristic != 0:
-                    print("---------------------- Step 0: Harvest Heuristic ----------------------")
-                    HarvestedCells, TotalDemand[Year - 1], TotalUtility[Year - 1] = Heuristics(heuristic,
-                                                                                           AvailCells_Set,
-                                                                                           BurntCells_Set,
-                                                                                           HarvestedCells,
-                                                                                           Year,
-                                                                                           InFolder,
-                                                                                           AdjCells,
-                                                                                           NCells,
-                                                                                           Utility,
-                                                                                           Volume,
-                                                                                           DemandArray,
-                                                                                           Cells_Obj,
-                                                                                           Weather_Obj,
-                                                                                           G)
+                    print("Benefit year", Year, ":", TotalUtility[Year - 1])
+                    print('HarvestCells_Set', Year, ':', HarvestCells_Set)
 
-                    HarvestCells_Set = HarvestCells_Set.union(HarvestedCells)
-                    print 'HarvestedCells_Set', HarvestCells_Set
-                    AvailCells_Set = AvailCells_Set.difference(HarvestCells_Set)
-                    if heuristic != 0:
-                        print("Benefit year", Year, ":", TotalUtility[Year - 1])
-                        print('HarvestCells_Set', Year, ':', HarvestCells_Set)
-
-                    for c in HarvestCells_Set:
-                        if (c - 1) not in Cells_Obj.keys():
-                            print 'Cosechamos la celda', c
-                            Cells_Obj[c - 1] = CellsFBP.Cells((c),
-                                                          AreaCells,
-                                                          CoordCells[c - 1],
-                                                          AgeCells,
-                                                          FTypeCells[c - 1],
-                                                          coef_ptr[FTypes2[str.lower(GForestType[c - 1])]],
-                                                          VolCells,
-                                                          PerimeterCells,
-                                                          StatusCells[c - 1],
-                                                          AdjCells[c - 1],
-                                                          Colors[c - 1],
-                                                          RealCells[c - 1],
-                                                          OutputGrid)
-                        Cells_Obj[c - 1].Status = 3
+                for c in HarvestCells_Set:
+                    if (c - 1) not in Cells_Obj.keys():
+                        print('Cosechamos la celda', c)
+                        Cells_Obj[c - 1] = CellsFBP.Cells((c),
+                                                        AreaCells,
+                                                        CoordCells[c - 1],
+                                                        AgeCells,
+                                                        FTypeCells[c - 1],
+                                                        coef_ptr[FTypes2[str.lower(GForestType[c - 1])]],
+                                                        VolCells,
+                                                        PerimeterCells,
+                                                        StatusCells[c - 1],
+                                                        AdjCells[c - 1],
+                                                        Colors[c - 1],
+                                                        RealCells[c - 1],
+                                                        OutputGrid)
+                    Cells_Obj[c - 1].Status = 3
 
                 ##########################################################################################################
                 #                   Step 1: Lightning/Ignition loop in order to find the first week with fire
@@ -762,35 +765,35 @@ class Main:
                         # Updating parameters inside the loop
                         loops += 1
 
-                        # Maximum number of iterations
-                        if loops > NCells:
-                            NoIgnition = True
-                            break
+                    # Maximum number of iterations
+                    if loops > NCells:
+                        NoIgnition = True
+                        break
 
-                # IF we have specific ignitions
-                if Ignitions != "":
-		    # Check if we have ignition radius and pick one ignition point at random from the set
-		    if IgnitionRad > 0:
-                    	print("Ignition Set Year", Year, "(inside ignition function):", IgnitionSets[Year])
-                    
-                    	# Pick any at random and set Ignitions[Years] with that cell
-                    	Ignitions[Year] = npr.choice(list(IgnitionSets[Year]))
-                    	print("Selected ignition point for Year", Year,":", Ignitions[Year])
-                    # Check ignition points are not already burnt and the cell is burnable
-                    if Ignitions[Year] not in BurntCells_Set and StatusCells[Ignitions[Year] - 1] != 4:
+                    # IF we have specific ignitions
+                    if Ignitions != "":
+                        # Check if we have ignition radius and pick one ignition point at random from the set
+                        if IgnitionRad > 0:
+                            print("Ignition Set Year", Year, "(inside ignition function):", IgnitionSets[Year])
 
-                        # Initialize it if needed
-                        if (Ignitions[Year] - 1) not in Cells_Obj.keys():
-                            Cells_Obj[Ignitions[Year] - 1] = CellsFBP.Cells((Ignitions[Year]), AreaCells,
-                                                                            CoordCells[Ignitions[Year] - 1], AgeCells,
-                                                                            FTypeCells[Ignitions[Year] - 1],
-                                                                            coef_ptr[FTypes2[str.lower(
-                                                                                GForestType[Ignitions[Year] - 1])]],
-                                                                            VolCells, PerimeterCells,
-                                                                            StatusCells[Ignitions[Year] - 1],
-                                                                            AdjCells[Ignitions[Year] - 1],
-                                                                            Colors[Ignitions[Year] - 1],
-                                                                            RealCells[Ignitions[Year] - 1], OutputGrid)
+                            # Pick any at random and set Ignitions[Years] with that cell
+                            Ignitions[Year] = npr.choice(list(IgnitionSets[Year]))
+                            print("Selected ignition point for Year", Year, ":", Ignitions[Year])
+                        
+                        # Check ignition points are not already burnt and the cell is burnable
+                        if Ignitions[Year] not in BurntCells_Set and StatusCells[Ignitions[Year] - 1] != 4:
+                            # Initialize it if needed
+                            if (Ignitions[Year] - 1) not in Cells_Obj.keys():
+                                Cells_Obj[Ignitions[Year] - 1] = CellsFBP.Cells((Ignitions[Year]), AreaCells,
+                                                                                CoordCells[Ignitions[Year] - 1], AgeCells,
+                                                                                FTypeCells[Ignitions[Year] - 1],
+                                                                                coef_ptr[FTypes2[str.lower(
+                                                                                    GForestType[Ignitions[Year] - 1])]],
+                                                                                VolCells, PerimeterCells,
+                                                                                StatusCells[Ignitions[Year] - 1],
+                                                                                AdjCells[Ignitions[Year] - 1],
+                                                                                Colors[Ignitions[Year] - 1],
+                                                                                RealCells[Ignitions[Year] - 1], OutputGrid)
 
                             # Initialize fire fields
                             Cells_Obj[Ignitions[Year] - 1].InitializeFireFields(CoordCells, AvailCells_Set)
@@ -1502,7 +1505,7 @@ class Main:
     df = pd.DataFrame({'AverageUtility($)': AverageUtility,
                        'BurntCells(%)': AverageBurntCells,
                        'AvailSet(%)': AverageAvailCells})
-    print df
+    print (df)
     # print StatPath
     # file = open(StatPath+"/Heuristic" + str(heuristic)+".csv",'w')
     df.to_csv(StatPath + "/Heuristic" + str(heuristic) + ".csv")
