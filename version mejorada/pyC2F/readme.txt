@@ -1,0 +1,12 @@
+### Ejecución 
+
+Navegar hasta pyC2F desde el terminal
+
+Ejecutar: 
+
+# Para una simulación
+python main.py --input-instance-folder ../Sub20/ --Fire-Period-Length 1.0 --nsims 1 --sim-years 1 --ignitions --output-folder ../Sub20/Resultados --output-messages --gridsFreq 1  --weather rows
+
+# Para multiples simulaciones:
+python main.py --input-instance-folder ../Sub20/ --Fire-Period-Length 1.0 --nsims 3 --sim-years 1 --ignitions --output-folder ../Sub20/Resultados --output-messages --gridsFreq 1 --IgnitionRadius 5 --weather random --seed 1234
+
