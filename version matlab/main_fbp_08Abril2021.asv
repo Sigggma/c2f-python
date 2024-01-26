@@ -200,3 +200,299 @@ fprintf('BFI = %.3f [kW/m] \t', bfi)
 fprintf('DB = %.3f [m] \t\t', bdist)
 fprintf('Perimeter = %.3f [m] \n', perelipse)
 
+
+%% Foliar Moisture Content
+x = 1:365;
+y = zeros(1,365);
+for i = x % i represents of julian day 
+    y(i) = foliar_moisture(lat,long,elev,i) ;
+end
+fig1 = plot(x,y,'-.') ;
+xlabel('Julian day','FontSize',14)
+ylabel('FMC [%]','FontSize',14)
+fig1.Parent.Box = 'off' ;
+ylim([0,140])
+%% Rate of Spread
+
+ps = 0 ;
+saz = 0 ;
+x = [0,5,10,20,30,40,50,60] ;
+y = zeros(1,length(x));
+for i = 1:length(x)
+    wdfh(1,"WS").Variables = x(i) ;
+    %y(i) = ros_base(ftype, isi, wdfh, a, b, c, FuelConst2)
+    y(i) = rate_of_spread(ftype,wdfh,a,b,c,ps,saz,FuelConst2,bui0,q) ;
+end
+
+%%
+t = tiledlayout(2,2);
+t.TileSpacing = 'compact';
+t.YLabel.String = 'Rate of Spread [m/min]';
+t.YLabel.FontSize = 18;
+t.XLabel.String = 'Wind Speed [Km/h]' ;
+t.XLabel.FontSize = 18 ;
+
+% C1
+ax1 = nexttile ;
+plot(x,y,'o')
+hold on
+
+p1 = 5.223 ;
+p2 = 0.1658 ;
+p3 = 0.01366 ;
+fHROS = @(x) 1./(p1.*exp(-p2.*x)+p3) ;
+fplot(fHROS)
+xlim([0,60])
+xlabel('FFMC = 90, DMC = 43, DC = 259')
+xticks([0:10:60])
+grid on
+ax1.Box = 'off' ;
+ax1.Title.String = 'Fuel Type C1 - FBP System' ;
+legend(ax1,'R-square = 0.9992')
+
+% PL01
+
+ax2 = nexttile ;
+Fmc = FactorCombustible.valor(19) ;
+Fch = function_ch(chD1L1) ;
+Fv = FactorViento(2:27,2) ;
+HROSdataPL01 = Fmc * Fch * (1 + Fv) ;
+plot(ws, HROSdataPL01,'o') ;
+hold on
+
+p1 =     0.06332 ;
+p2 =      0.1599 ;
+p3 =     0.01836 ;
+
+%  R-square: 0.9967
+%  Adjusted R-square: 0.9964
+
+fHROS = @(x) 1 ./ (p1.*exp(-p2*x)+p3) ; % [m/min]
+fplot(fHROS)
+xlim([0,60])
+xlabel('FMC = 4%')
+xticks([0:10:60])
+ax2.Box = 'off' ;
+ax2.Title.String = 'Fuel Type PL01 - KITRAL System' ;
+legend(ax2,'R-square = 0.9964')
+grid on
+
+ax3 = nexttile ;
+x1 = [0,1, 5, 10,15, 20,25, 30,35, 40,45, 50,55, 60] ;
+y1 = [0.4  0.6	2.5	6.1	10.6	15.8	21.5	27.8	34.6	41.7	49.3	57.3	65.6	74.2];
+
+plot(x1, y1,'o') ;
+hold on
+
+p1 = 0.2802 ;
+p2 = 0.07786 ;
+p3 = 0.01123 ;
+
+% R-square: 0.9944
+% Adjusted R-square: 0.9933
+
+fHROS = @(x) 1 ./ (p1.*exp(-p2.*x)+p3) ; % [m/min]
+fplot(fHROS)
+xlim([0,60])
+xlabel('1-h = 3%, 10-h = 4%, 100-h = 5%, LHM = 30%, LWM = 60%')
+xticks([0:10:60])
+ax3.Box = 'off' ;
+ax3.Title.String = 'Fuel Type 10 - Rothermel Models' ;
+legend(ax3,'R-square = 0.9933')
+grid on
+
+ax4 = nexttile ;
+x1 = [0,1, 5, 10,15, 20,25, 30,35, 40,45, 50,55, 60] ;
+y1 = [0.6	0.8	3.1	8.5	15.9	24.9	35.5	47.5	60.8	75.3	91.0	107.9	125.8	144.7] ;
+plot(x1, y1,'o') ;
+hold on
+
+% R-square: 0.9957
+% Adjusted R-square: 0.995
+
+p1 = 0.1843 ;
+p2 = 0.07911 ;
+p3 = 0.005477 ;
+
+fHROS = @(x) 1 ./ (p1.*exp(-p2.*x)+p3) ; % [m/min]
+fplot(fHROS)
+xlim([0,60])
+xlabel('1-h = 3%, 10-h = 4%, 100-h = 5%, LHM = 30%, LWM = 60%')
+xticks([0:10:60])
+yticks([0:20:150])
+ax4.Box = 'off' ;
+ax4.Title.String = 'Fuel Type TU4 (164) - Scott & Burgan Models' ;
+legend(ax4,'R-square = 0.9957')
+grid on
+
+%% Length to Breadth
+t = tiledlayout(2,2);
+t.TileSpacing = 'compact';
+t.YLabel.String = 'Length-to-breath (LB)';
+t.YLabel.FontSize = 18;
+t.XLabel.String = 'Wind Speed [Km/h]' ;
+t.XLabel.FontSize = 18 ;
+
+x1 = [0,1, 5, 10,15, 20,25, 30,35, 40,45, 50,55, 60] ;
+y1 = l2bFBP("C1",x1);
+
+
+ax1 = nexttile ;
+plot(x1,y1,'o')
+
+hold on
+l1 =  3.053  ;
+l2 = 0.02667 ;
+%R-square: 0.9999
+
+lbgFBP1 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+
+fplot(lbgFBP1)
+xlim([0,60])
+ylim([0,8])
+
+xticks(0:5:60)
+yticks(0:1:8)
+yticks(0:1:8)
+grid on
+ax1.Box = 'off' ;
+ax1.Title.String = 'LB FBP System' ;
+
+
+hold on
+plot(x1,y2,'o')
+l1 = 2.454 ;
+l2 = 0.07154 ;
+lbgFBP2 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbgFBP2)
+legend(ax1,{'Others, R-square = 0.999','','Grass, R-square = 0.969',''},'FontSize',12,'Location',"northwest")
+
+%% Anderson
+ax2 = nexttile ;
+y3 = l2bAnderson1983("dense-forest-stand",x1) ; % 
+plot(x1,y3,'o')
+
+xticks(0:5:60)
+xlim([0,60])
+grid on
+
+l1 = 1.411 ;
+l2 = 0.01745 ;
+
+% R-square: 0.9937
+% Adjusted R-square: 0.9932
+
+lbAnderson1 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+hold on
+fplot(lbAnderson1)
+
+%------------------
+y4 = l2bAnderson1983("open-forest-stand",x1) ; 
+plot(x1,y4,'o')
+hold on
+l1 = 2.587 ;
+l2 = 0.01142 ;
+% R-square: 0.9951
+% Adjusted R-square: 0.9947
+
+lbAnderson2 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbAnderson2)
+
+%---------------------
+y5 = l2bAnderson1983("grass-slash",x1) ; 
+plot(x1,y5,'o')
+hold on
+l1 =  5.578 ;
+l2 = 0.006023 ;
+
+% R-square: 0.9962
+%  Adjusted R-square: 0.9959
+
+lbAnderson3 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbAnderson3)
+
+% --------------------------
+y6 = l2bAnderson1983("heavy-slash",x1) ; 
+plot(x1,y6,'o')
+hold on
+l1 = 37.49 ;
+l2 =  0.0009885 ;
+
+% R-square: 0.997
+% Adjusted R-square: 0.9968
+
+lbAnderson4 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbAnderson4)
+
+%------------------
+y7 = l2bAnderson1983("crown-fire",x1) ; 
+plot(x1,y7,'o')
+hold on
+l1 = 3432 ;
+l2 = 3.497e-05 ;
+%  R-square: 0.9095
+%  Adjusted R-square: 0.9019
+
+lbAnderson5 = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbAnderson5)
+
+grid on
+ax2.Box = 'off' ;
+ax2.Title.String = 'Anderson (1983)' ;
+
+legend(ax2,{'dense-forest-stand, R-square = 0.993','',...
+            'open-forest-stand, R-square = 0.995','',...
+            'grass-slash, R-square = 0.996','',...
+            'heavy-slash, R-square = 0.997'},...
+            'FontSize',12,'Location',"northwest")
+
+
+% --------------------------- Alexander 1985 -----------------------------%
+
+ax3 = nexttile ;
+
+y8 = l2bAlexander1985(x1) ;
+plot(x1,y8,'o')
+hold on
+
+l1 = 3.063 ;
+l2 = -0.01165 ;
+
+%  R-square: 0.9977
+%  Adjusted R-square: 0.9975
+  
+
+lbAlexander = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbAlexander)
+
+xticks(0:5:60)
+xlim([0,60])
+ylim([0,11])
+grid on
+
+
+ax3.Box = 'off' ;
+ax3.Title.String = 'Alexander (1985)' ;
+legend(ax3,'R-square = 0.9977','FontSize',12,'Location',"northwest")
+
+% ----------------------------
+
+ax4 = nexttile ;
+x2 = 0:25;
+plot(0:25,LB,'o')
+hold on
+
+l1 =     2.233 ;
+l2 =    -0.01031 ;
+
+% R-square: 0.9848
+%  Adjusted R-square: 0.9838
+lbKITRAL = @(x) 1.0 + (l1*(1-exp(-l2*x))).^2;
+fplot(lbKITRAL)
+
+ax4.Box = 'off' ;
+ax4.Title.String = 'KITRAL System' ;
+legend(ax4,'R-square = 0.9848','FontSize',12,'Location',"northwest")
+grid on
+xlim([0,60])
+ylim([0,7])
